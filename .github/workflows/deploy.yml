@@ -28,7 +28,7 @@ jobs:
       # Astro's inter-chunk imports are relative (./) — unchanged.
       - name: Prefix paths for the /-web-animation8 subpath
         run: |
-          BP=/-web-animation8
+          BP=/web-animation8
           rm -rf _site && cp -r public _site
           find _site -name '*.html' -print0 | xargs -0 sed -i -E \
             -e "s#([ \"'(,=])/(_astro|icons|glb|draco|img|fonts)/#\1$BP/\2/#g" \
