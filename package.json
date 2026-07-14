@@ -1,0 +1,8 @@
+{
+  "name": "vectrfl",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Faithful 1:1 clone of vectrfl.com (Astro static, multi-page)",
+  "scripts": { "dev": "node server.mjs public 3700", "start": "node server.mjs public 3700" }
+}
