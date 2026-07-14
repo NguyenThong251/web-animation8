@@ -1,0 +1,60 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Captured Astro static site (Three.js/WebGL, Draco GLB) in public/. For the
+      # /-web-animation8 subpath: prefix root-absolute asset paths + nav links in the
+      # HTML (delimiter-class catches srcset multi-URL), set Astro's inlined BASE_URL
+      # (var `At`) so runtime GLB/img fetches resolve, and prefix the hardcoded
+      # `/draco/` path + the leading-slash-less `"_astro/…"` island-renderer array in JS.
+      # Astro's inter-chunk imports are relative (./) — unchanged.
+      - name: Prefix paths for the /-web-animation8 subpath
+        run: |
+          BP=/-web-animation8
+          rm -rf _site && cp -r public _site
+          find _site -name '*.html' -print0 | xargs -0 sed -i -E \
+            -e "s#([ \"'(,=])/(_astro|icons|glb|draco|img|fonts)/#\1$BP/\2/#g" \
+            -e "s#=\"/apply#=\"$BP/apply#g" \
+            -e "s#=\"/industries#=\"$BP/industries#g" \
+            -e "s#=\"/our-mission#=\"$BP/our-mission#g" \
+            -e "s#=\"/request-crew#=\"$BP/request-crew#g" \
+            -e "s#=\"/privacy#=\"$BP/privacy#g" \
+            -e "s#=\"/terms#=\"$BP/terms#g"
+          find _site/_astro -name '*.js' -print0 | xargs -0 sed -i -E \
+            "s#([\"'])/(glb|draco|img|_astro)/#\1$BP/\2/#g"
+          find _site/_astro -name '*.js' -print0 | xargs -0 sed -i \
+            -e "s#At=\"/\"#At=\"$BP/\"#g" \
+            -e "s#\"_astro/#\"$BP/_astro/#g"
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
